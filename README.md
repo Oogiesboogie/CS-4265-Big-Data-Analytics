@@ -1,2 +1,6 @@
 # CS-4265-Big-Data-Analytics
-Semester long project for my Big Data Analytics class.
+This project focuses on Formula 1 analytics with an emphasis on telemetry, timing, and race event data. Modern Formula 1 races generate large volumes of structured and semi-structured data, including lap times, sector splits, pit stop events, tire strategies, and race conditions across multiple sessions and seasons. As historical data accumulates and race-level granularity increases, analyzing this data on a single machine becomes inefficient due to storage constraints and processing latency. 
+
+This project addresses the challenge of storing, processing, and querying large-scale Formula 1 race data using a distributed big data stack. The system is designed to answer analytical questions such as lap time trends across stints, pit stop performance comparisons, and performance variation across circuits and seasons.
+
+The scope of this project is limited to batch-oriented distribution analytics rather than real-time race prediction. The implementation will ingest historical race and telemetry data, perform distributed processing and aggregation, and support analytical queries. Machine learning-based prediction, live streaming ingestion, and proprietary Formula 1 data sources are outside the scop of this project.
