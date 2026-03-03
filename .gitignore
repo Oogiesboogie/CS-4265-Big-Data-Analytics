@@ -1,0 +1,24 @@
+# Virtual environment
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo 
+*.pyd
+
+# Environment variables
+.env
+
+# Data files
+data/raw/
+data/processed/
+
+# Spark artifacts
+spark-warehouse/
+metastore_db/
+
+# OS files
+.DS_Store
+Thumbs.db 
