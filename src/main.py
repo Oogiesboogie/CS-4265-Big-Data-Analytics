@@ -1,22 +1,32 @@
 import os
 from pyspark.sql import SparkSession
-from openf1 import fetch_sessions, save_raw_data
-from fastf1_data import fatch_fastf1_data, save_fastf1_data
+
+from ingestion.openf1 import fetch_sessions, save_raw_data
+from ingestion.fastf1 import fetch_fastf1_data, save_fastf1_data
+from processing.transform import DataTransformer
 
 def main():
     year = 2025
 
+    #Paths
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    raw_dir = os.path.join(base_dir,"..", "data", "raw")
+    processed_dir = os.path.join(base_dir,"..", "data", "processed")
+
+    os.makedirs(raw_dir, exist_ok=True)
+    os.makedirs(processed_dir, exist_ok=True)
+
     #Step 1 fetch data
     try:
-        print("Fetching data...")
+        print("Fetching OpenF1 data...")
         data = fetch_sessions(year)
         save_raw_data(data, year)
     except Exception as error:
-        print ("Error during data acquisition:", error)
-        return
+        print ("OpenF1 error:", error)
 
     try:
-        fastf1_data = fatch_fastf1_data(year, "Bahrain Grand Prix")
+        print("Fetching FastF1 data...")
+        fastf1_data = fetch_fastf1_data(year, "Bahrain Grand Prix")
 
         if fastf1_data:
             laps, results = fastf1_data
@@ -26,64 +36,59 @@ def main():
         print ("FastF1 error:", error)
 
     #Step 2 spark processing
-    spark = SparkSession.builder.appName("F1 OpenF1 Pipeline").getOrCreate()
+    spark = SparkSession.builder.appName("F1 Pipeline").getOrCreate()
+    transformer = DataTransformer(spark)
 
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    raw_path = os.path.join(base_dir, "data", "raw", f"{year}_sessions.json")
-    processed_path = os.path.join(base_dir, "data", "processed", f"{year}_sessions")
+    #OpenF1 JSON
+    openf1_path = os.path.join(raw_dir, f"{year}_sessions.json")
+
 
     try:
-        df = spark.read.option("multiline", "true").json(raw_path)
-    except Exception as error:
-        print("Error loading JSON:", error)
-        spark.stop()
-        return
+        df_openf1 = spark.read.option("multiline", "true").json(raw_path)
+        df_openf1_clean = transformer.transform_openf1_sessions(df_openf1)
 
-    print("Raw Data Schema:")
-    df.printSchema()
+        df_openf1_clean.write.mode("overwrite").parquet(
+            os.path.join(processed_dir, "openf1_sessions")
+        )
+
+        print("OpenF1 processed rows:", df_openf1_clean.count())
+
+    except Exception as error:
+        print("OpenF1 processing error:", error)
+
+    #FastF1 csv
+    laps_path = os.path.join(raw_dir, f"{year}_bahrain_laps.csv")
+    results_path = os.path.join(raw_dir, f"{year}_bahrain_results.csv")
+
+    try:
+        df_laps = spark.read.csv(laps_path, header=True, inferSchema=True)
+        df_results = spark.read.csv(results_path, header=True, inferSchema=True)
+
+        df_laps_clean = transformer.transform_fastf1_laps(df_laps)
+        df_results_clean = transformer.transform_fastf1_results(df_results)
+
+        df_laps_clean.write.mode("overwrite").parquet(
+            os.path.join(processed_dir, "fastf1_laps")
+        )
+
+        df_results_clean.write.mode("overwrite").parquet(
+            os.path.join(processed_dir, "fastf1_results")
+        )
+
+        print("FastF1 laps rows:", df_laps_clean.count())
+        print("FastF1 results rows:", df_results_clean.count())
+
+    except Exception as error:
+        print("FastF1 processing error:", error)
 
     #Step 3 transformations
-    df_clean = df.dropna()
-
-    #Example normalization
-    if "session_name" in df_clean.columns:
-        df_clean = df_clean.withColumnRenamed("session_name", "session")
-
-    #Step 4 save processed data
-    df_clean.write.mode("overwrite").parquet(processed_path)
-
-    print(f"Processed data save to {processed_path}")
-
-    #Step 5 output
-    print("Total sessions:", df_clean.count())
-    df_clean.show(5)
+    try:
+        print("Sample query: laps per driver")
+        df_laps_clean.groupBy("Driver").count().show()
+    except Exception as error:
+        print("Skipping output query")
 
     spark.stop()
 
 if __name__ == "__main__":
     main()
-
-#Create Spark session
-spark = SparkSession.builder.appName("F1 OpenF1 Pipeline").getOrCreate()
-
-#Paths
-base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-raw_path = os.path.join(base_dir, "data", "raw", "2025_sessions.json")
-processed_path = os.path.join(base_dir, "data", "processed", "2025_sessions")
-
-os.makedirs(os.path.join(base_dir, "data", "processed"), exist_ok=True)
-
-#Load raw JSON
-df = spark.read.option("multiline", "true").json(raw_path)
-
-print("Raw Data Schema:")
-df.printSchema()
-
-print("Sample Rows:")
-df.show(10, truncate=False)
-
-df.write.mode("overwrite").parquet(processed_path)
-
-print(f"Processed data saved to {processed_path}")
-
-spark.stop()

@@ -24,7 +24,7 @@ def fetch_fastf1_data(year=2025, race_name = "Bahrain Grand Prix", session_type 
 
     try:
         laps = session.laps
-        results = sessions.results
+        results = session.results
     except Exception as error:
         print("error extracting session data:", error)
         return None
