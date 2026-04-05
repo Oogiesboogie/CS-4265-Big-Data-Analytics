@@ -31,6 +31,27 @@ def main():
     print("Raw Data Schema:")
     df.printSchema()
 
+    #Step 3 transformations
+    df_clean = df.dropna()
+
+    #Example normalization
+    if "session_name" in df_clean.columns:
+        df_clean = df_clean.withColumnRenamed("session_name", "session")
+
+    #Step 4 save processed data
+    df_clean.write.mode("overwrite").parquet(processed_path)
+
+    print(f"Processed data save to {processed_path}")
+
+    #Step 5 output
+    print("Total sessions:", df_clean.count())
+    df_clean.show(5)
+
+    spark.stop()
+
+if __name__ == "__main__":
+    main()
+
 #Create Spark session
 spark = SparkSession.builder.appName("F1 OpenF1 Pipeline").getOrCreate()
 
