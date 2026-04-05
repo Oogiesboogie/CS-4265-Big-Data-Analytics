@@ -2,20 +2,17 @@ import fastf1
 import pandas as pd
 import os
 
-def fetch_fastf1_data(year=2025, race_name = "Bahrain Grand Prix", session_type = "R"):
-    """
-    Fetch session data using FastF1
-    session_type:
-        R = Race
-        Q = Qualifying
-        FP1/FP2/FP3 = Practice
-    """
+def fetch_fastf1_data(year=2025, race_name = "Bahrain Grand Prix"):
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    cache_dir = os.path.join(project_root, "data", "cache")
+
+    #Create cache directory if it doesn't exist
+    os.makedirs(cache_dir, exist_ok=True)
+
+    fastf1.Cache.enable_cache(cache_dir)
 
     try:
-        fastf1.Cache.enable_cache('cache') #speeds up repeated runs
-
-        print(f"Loading {race_name} {year} ({session_type})...")
-        session = fastf1.get_session(year, race_name, session_type)
+        session = fastf1.get_session(year, race_name, "R")
         session.load()
 
     except Exception as error:
@@ -32,9 +29,9 @@ def fetch_fastf1_data(year=2025, race_name = "Bahrain Grand Prix", session_type 
     return laps, results
 
 def save_fastf1_data(laps, results, year=2025, race_name="bahrain"):
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-    raw_dir = os.path.join(base_dir, "data", "raw")
+    raw_dir = os.path.join(project_root, "data", "raw")
     os.makedirs(raw_dir, exist_ok=True)
 
     laps_path = os.path.join(raw_dir, f"{year}_{race_name}_laps.csv")
@@ -52,13 +49,3 @@ def save_fastf1_data(laps, results, year=2025, race_name="bahrain"):
 
     except Exception as error:
         print("error saving FastF1 data:", error)
-
-if __name__ == "__main__":
-    year = 2025
-    race = "Bahrain Grand Prix"
-
-    data = fetch_fastf1_data(year, race)
-
-    if data:
-        laps, results = data
-        save_fastf1_data(laps, results, year, "bahrain")
