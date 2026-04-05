@@ -15,9 +15,11 @@ def fetch_sessions(year=2025):
     return response.json()
 
 def save_raw_data(data, year=2025):
-    os.makedirs("../../data/raw", exist_ok=True)
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    raw_dir = os.path.join(base_dir, "data", "raw")
 
-    file_path = f"../../data/raw/{year}_sessions.json"
+    os.makedirs(raw_dir, exist_ok=True)
+    file_path = os.path.join(raw_dir, f"{year}_sessions.json")
 
     with open(file_path, "w") as f:
         json.dump(data, f, indent=4)
