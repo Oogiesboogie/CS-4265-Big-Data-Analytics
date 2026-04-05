@@ -12,7 +12,7 @@ def fetch_fastf1_data(year=2025, race_name = "Bahrain Grand Prix", session_type 
     """
 
     try:
-        fastf1.Cache.enable_cache('../../cache') #speeds up repeated runs
+        fastf1.Cache.enable_cache('cache') #speeds up repeated runs
 
         print(f"Loading {race_name} {year} ({session_type})...")
         session = fastf1.get_session(year, race_name, session_type)

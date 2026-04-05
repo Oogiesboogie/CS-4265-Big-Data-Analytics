@@ -1,6 +1,7 @@
 import os
 from pyspark.sql import SparkSession
 from openf1 import fetch_sessions, save_raw_data
+from fastf1_data import fatch_fastf1_data, save_fastf1_data
 
 def main():
     year = 2025
@@ -13,6 +14,16 @@ def main():
     except Exception as error:
         print ("Error during data acquisition:", error)
         return
+
+    try:
+        fastf1_data = fatch_fastf1_data(year, "Bahrain Grand Prix")
+
+        if fastf1_data:
+            laps, results = fastf1_data
+            save_fastf1_data(laps, results, year, "bahrain")
+
+    except Exception as error:
+        print ("FastF1 error:", error)
 
     #Step 2 spark processing
     spark = SparkSession.builder.appName("F1 OpenF1 Pipeline").getOrCreate()
