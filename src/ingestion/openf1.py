@@ -5,8 +5,12 @@ import os
 def fetch_sessions(year=2025):
     url = f"https://api.openf1.org/v1/sessions?year={year}"
 
-    response = requests.get(url)
-    response.raise_for_status()
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as error:
+        print("API request failed: ", error)
+        return []
 
     return response.json()
 
