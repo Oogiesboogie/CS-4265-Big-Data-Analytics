@@ -3,15 +3,27 @@
 ## Overview
 
 This project builds a scalable Big Data pipeline for analyzing Formula 1 sessions and telemetry data using Apache Spark. 
-The system ingests data from external APIs, stores it persistently, and provides a modular framework for distributed processing and future analytical workloads. 
-Milestone 2 Demonstrates a working proof of concept, including data acquisition, persistent storage, and structured pipeline organization.
+
+The system
+- Fetches data from external APIs (OpenF1 and FastF1)
+- Stores raw data persistently (JSON/CSV)
+- Applies cleaning, normalization, and transformation
+- Outputs analytics-ready Parquet datasets
+
+Milestone 3 demonstrates a fully functional pipeline, with automated data flow from ingestion through processing to output.
+
 ---
+
 ## Data Sources
 The project uses:
-- OpenF1 - Session-level metadata and structures event data
-- FastF1 - Detailed telemetry and official timing data (planned integration)
-Originally, the project proposed using Ergast API. This was replaced with FastF1 to improve telemetry depth and long term extensibility.
-At Milestone 2, OpenF1 ingestion is fully operational. FastF1 integration will be implemented in Milestone 3.
+- OpenF1 - Session-level metadata (races, sessions, drivers)
+- FastF1 - Detailed telemetry and official timing data
+  
+Notes
+- Previously proposed Ergast API was replaced with FastF1 for richer telemetry
+- OpenF1 ingestion is fully operational; FastF1 ingestion integrated in M3
+- All data is stored locally under data/raw/ and data/processed/
+
 ---
 ## Project Structure
 project/\
@@ -22,6 +34,7 @@ project/\
 | _ |   +-- transform.py\
 | _ +-- main.py\
 +-- data/\
+| - +-- cache/\
 | _ +-- raw/\
 | _ +-- processed/\
 +-- requirements.txt\
@@ -35,9 +48,10 @@ project/\
 - 'data/processed/' - Parquet output
 ---
 ## Technology Stack
-- Python 3
+- Python 3.12
 - Apache Spark (PySpark)
 - JSON (raw ingestion)
+- CSV (some telemetry input (FastF1))
 - Parquet (analytical storage format)
 ---
 ## Setup Instructions
@@ -54,19 +68,51 @@ pip install -r requirements.txt
 ## Running the Pipeline
 ### Step 1: Fetch Raw Data (OpenF1)
 python src/ingestion/openf1.py
-this saves session data to data/raw/
+python src/ingestion/fastf1.py
+- downloads session and telemetry data
+- this saves session data to data/raw/
 ### Step 2: Process Data with Spark
 spark-submit src/main.py
-This writes Parquet output to data/processed/
-## Current Status (Milestone 2)
-- working API data acquisition
-- Persistent raw JSON storage
-- Spark-based Parquet generation
-- Modular pipeline structure
-- Clean repository with documented dependencies
-This milestone validates the feasibility of the proposed distributed analytics architecture
-## Next Steps (Milestone 3)
-- Integrate FastF1 telemetry ingestion
-- Normalization schemas across multiple sources
-- Implement aggregation and analytical queries
-- Evaluate scalability as data volume increases
+- Applies transformations
+- This writes Parquet output to data/processed/
+- Handles missing data and API errors gracefully
+- Prints sample output and summary statistics 
+## Data Dictionary
+
+**Raw Files:**
+| File | Description | Format |
+|------|-------------|--------|
+| '2025_sessions.json' | OpenF1 session metadata | JSON |
+| '2018_bahrain_laps.csv' | FastF1 lap timing | CSV |
+| '2018_bahrain_results.csv' | FastF1 official results | CSV |
+
+**Processed Files:**
+| File/Folder | Description | Format | Notes |
+|-------------|-------------|--------|-------|
+| 'openf1_sessions/' | Cleaned OpenF1 session data | Parquet | Columns: 'FullName, Team, Event, SessionType, LapTime' |
+| 'fastf1_laps/' | Cleaned lap data | Parquet | Columns: 'Driver, LapNumber, LapTime, RaceName' |
+| 'fastf1_results/' | Cleaned race results | Parquet | Columns: 'Driver, Position, Points, Team' |
+
+### Sample Output
+
+**OpenF1 processed rows:** 120
+**FastF1 laps rows:** 90
+**FastF1 results rows:** 22
+
+**Sample OpenF1:**
+| FullName | Team | Event | SessionType | LapTime |
+|----------|------|-------|-------------|---------|
+| Lando N | Mclaren | Bahrain GP | Race | 1:34.123 |
+| Max V | Red Bull | Bahrain GP | Race | 1:34.567 |
+
+**Sample FastF1 laps:**
+| Driver | LapNumber | LapTime | RaceName| 
+|--------|-----------|---------|---------|
+| Lando N | 1 | 1:34.123 | Bahrain GP |
+| Max V | 1 | 1:34.567 | Bahrain GP |
+
+## Next Steps (Milestone 4)
+- Aggregation and analytical queries on processed data
+- Integration of additional APIs or historical datasets
+- Enhanced visualizations and dashboards
+- Performance optimization and distributed scaling
