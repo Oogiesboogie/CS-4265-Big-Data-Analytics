@@ -2,117 +2,215 @@
 
 ## Overview
 
-This project builds a scalable Big Data pipeline for analyzing Formula 1 sessions and telemetry data using Apache Spark. 
+This project builds a scalable Big Data pipeline that processes multi-season Formula 1 telemetry and race data using Apache Spark and FastF1 APIs 
 
-The system
-- Fetches data from external APIs (OpenF1 and FastF1)
-- Stores raw data persistently (JSON/CSV)
-- Applies cleaning, normalization, and transformation
-- Outputs analytics-ready Parquet datasets
-
-Milestone 3 demonstrates a fully functional pipeline, with automated data flow from ingestion through processing to output.
+It extracts, processes, and analyzes race performance data to generate driver and race-level insights across multiple seasons. 
 
 ---
 
-## Data Sources
-The project uses:
-- OpenF1 - Session-level metadata (races, sessions, drivers)
-- FastF1 - Detailed telemetry and official timing data
-  
-Notes
-- Previously proposed Ergast API was replaced with FastF1 for richer telemetry
-- OpenF1 ingestion is fully operational; FastF1 ingestion integrated in M3
-- All data is stored locally under data/raw/ and data/processed/
+## What It Does
+- Ingests Formula 1 race and qualifying data across multiple seasons
+- Processes telemetry using distributed Spark transformations
+- Generates performance analytics such as:
+  - Driver average lap times
+  - Fastest laps per race
+  - Race pace comparisons
+- Validates data quality before output
+- Produces structured analytical datasets
 
 ---
-## Project Structure
-project/\
-+-- src/\
-| _ +-- ingestion/\
-| _ |   +-- openf1.py\
-| _ +-- processing/\
-| _ |   +-- transform.py\
-| _ +-- main.py\
-+-- data/\
-| - +-- cache/\
-| _ +-- raw/\
-| _ +-- processed/\
-+-- requirements.txt\
-+-- README.md\
-+-- .gitignore
 
-- 'ingestion/' - API data acquisition modules
-- 'processing/' - Transformation and normalization logic
-- 'main.py' - Spark orchestration
-- 'data/raw/' - Raw JSON storage
-- 'data/processed/' - Parquet output
+## Architecture 
+
+**Pipeline Flow:**
+
+Date Sources (FastF1 API)
+-> Ingestion Layer
+-> Spark Processing Layer
+-> Feature Engineering
+-> Validation Layer
+-> Output (Parquet files)
+
 ---
+
 ## Technology Stack
 - Python 3.12
 - Apache Spark (PySpark)
 - JSON (raw ingestion)
 - CSV (some telemetry input (FastF1))
 - Parquet (analytical storage format)
+  
+---
+
+## Project Structure
+
+CS-4265-Big-Data-Analytics/\
+│\
+├── src/\
+│ ├── main.py\
+│ │\
+│ ├── ingestion/\
+│ │ ├── openf1.py\
+│ │ └── fastf1.py\
+│ │\
+│ ├── processing/\
+│ │ ├── transform.py\
+│ │ └── features.py\
+│ │\
+│ ├── validation/\
+│ │ └── validate.py\
+│\
+├── data/\
+│ └── sample/\
+│\
+├── output/\
+│ └── (generated results)\
+│\
+├── docs/\
+│ ├── M4_Final_Report.pdf\
+│ ├── validation.md\
+│ └── architecture.png\
+│\
+├── requirements.txt\
+├── .gitignore\
+├── .env.example\
+├── LICENSE\
+└── README.md
+
 ---
 ## Setup Instructions
-### 1. Clone the Repository
-'''bash
-git clone https://github.com/Oogiesboogie/CS-4265-Big-Data-Analytics.git
+git clone https://github.com/YOUR_USERNAME/CS-4265-Big-Data-Analytics.git
 cd CS-4265-Big-Data-Analytics
-### 2. Create Virtual Environment
-python -m venv .venv
-Activate:
-.venv\Scripts\activate
-### 3. Install Dependencies
-pip install -r requirements.txt
-## Running the Pipeline
-### Step 1: Fetch Raw Data (OpenF1)
-python src/ingestion/openf1.py
-python src/ingestion/fastf1.py
-- downloads session and telemetry data
-- this saves session data to data/raw/
-### Step 2: Process Data with Spark
-spark-submit src/main.py
-- Applies transformations
-- This writes Parquet output to data/processed/
-- Handles missing data and API errors gracefully
-- Prints sample output and summary statistics 
-## Data Dictionary
 
-**Raw Files:**
+Create virtual environment:
+python -m venv .venv
+
+Activate environment:
+Windows: .venv\Scripts\activate  
+Mac/Linux: source .venv/bin/activate
+
+Install dependencies:
+pip install -r requirements.txt
+
+Run pipeline:
+python src/main.py
+
+## 📦 Data Schema & Outputs
+
+This pipeline processes both raw and transformed datasets.
+
+---
+
+### 🗂️ Raw Data Inputs
+
 | File | Description | Format |
 |------|-------------|--------|
-| '2025_sessions.json' | OpenF1 session metadata | JSON |
-| '2018_bahrain_laps.csv' | FastF1 lap timing | CSV |
-| '2018_bahrain_results.csv' | FastF1 official results | CSV |
+| 2025_sessions.json | OpenF1 session metadata | JSON |
+| 2018_bahrain_laps.csv | FastF1 lap timing data | CSV |
+| 2018_bahrain_results.csv | FastF1 official race results | CSV |
 
-**Processed Files:**
-| File/Folder | Description | Format | Notes |
-|-------------|-------------|--------|-------|
-| 'openf1_sessions/' | Cleaned OpenF1 session data | Parquet | Columns: 'FullName, Team, Event, SessionType, LapTime' |
-| 'fastf1_laps/' | Cleaned lap data | Parquet | Columns: 'Driver, LapNumber, LapTime, RaceName' |
-| 'fastf1_results/' | Cleaned race results | Parquet | Columns: 'Driver, Position, Points, Team' |
+---
 
-### Sample Output
+### ⚙️ Processed Data Outputs
 
-**OpenF1 processed rows:** 120
-**FastF1 laps rows:** 90
-**FastF1 results rows:** 22
+| Dataset | Description | Format | Notes |
+|----------|-------------|--------|-------|
+| openf1_sessions | Cleaned OpenF1 session data | Parquet | FullName, Team, Event, SessionType, LapTime |
+| fastf1_laps | Cleaned lap-by-lap telemetry | Parquet | Driver, LapNumber, LapTime, RaceName |
+| fastf1_results | Final race classification data | Parquet | Driver, Position, Points, Team |
 
-**Sample OpenF1:**
+---
+
+### 📊 Sample Output Metrics
+
+- OpenF1 processed rows: ~120  
+- FastF1 lap records: ~90  
+- FastF1 results records: ~22  
+
+---
+
+### 🧾 Sample Records
+
+#### OpenF1 Processed Data
+
 | FullName | Team | Event | SessionType | LapTime |
 |----------|------|-------|-------------|---------|
-| Lando N | Mclaren | Bahrain GP | Race | 1:34.123 |
-| Max V | Red Bull | Bahrain GP | Race | 1:34.567 |
+| Lando Norris | McLaren | Bahrain GP | Race | 1:34.123 |
+| Max Verstappen | Red Bull | Bahrain GP | Race | 1:34.567 |
 
-**Sample FastF1 laps:**
-| Driver | LapNumber | LapTime | RaceName| 
-|--------|-----------|---------|---------|
-| Lando N | 1 | 1:34.123 | Bahrain GP |
-| Max V | 1 | 1:34.567 | Bahrain GP |
+---
 
-## Next Steps (Milestone 4)
-- Aggregation and analytical queries on processed data
-- Integration of additional APIs or historical datasets
-- Enhanced visualizations and dashboards
-- Performance optimization and distributed scaling
+#### FastF1 Lap Data
+
+| Driver | LapNumber | LapTime | RaceName |
+|--------|-----------|---------|----------|
+| Lando Norris | 1 | 1:34.123 | Bahrain GP |
+| Max Verstappen | 1 | 1:34.567 | Bahrain GP |
+
+---
+
+## Data Validation 
+
+The pipeline includes:
+- Null checks on critical fields
+- Empty dataset validation
+- Schema verification
+- Basic statistical sanity checks
+
+---
+
+## Known Limitations
+
+- Dataset size depends on FastF1 API availability
+- Local Spark performance varies by machine
+- Cache files are excluded from version control
+- Some historical data may be incomplete
+
+---
+
+## Future Improvements
+
+- Expand to full multi-season ingestion
+- Add streaming real-time telemetry pipeline
+- Build visualization dashboard (Plotly / Power BI)
+- Deploy to cloud (AWS / Databricks / GCP)
+- Add predictive machine learning models
+
+---
+
+## Cache Handling
+
+FastF1 generates local cache files which are not tracked in Git.
+
+To clear cache if needed:
+rm -rf data/cache
+
+--- 
+
+## Dependencies
+
+Required packages:
+- pyspark
+- fastf1
+- pandas
+- requests
+
+Install with:
+pip install -r requirements.txt
+
+---
+
+## License
+
+MIT License
+
+--- 
+
+## Project Summary
+
+This project demonstrates:
+- Distributed data processing using Spark
+- API-based ingestion pipeline design
+- Data transformation and feature engineering
+- Data validation and quality control
+- Scalable architecture for analytics workflows
