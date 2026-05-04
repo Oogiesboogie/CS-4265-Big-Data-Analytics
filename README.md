@@ -55,13 +55,12 @@ CS-4265-Big-Data-Analytics/\
 │ │\
 │ ├── processing/\
 │ │ ├── transform.py\
-│ │ └── features.py\
 │ │\
-│ ├── validation/\
-│ │ └── validate.py\
 │\
 ├── data/\
-│ └── sample/\
+│ ├── cache/\
+| ├── processed/\
+| └── raw/\
 │\
 ├── output/\
 │ └── (generated results)\
